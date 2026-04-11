@@ -6,6 +6,9 @@ export interface User {
   tier: 'Bronce' | 'Plata' | 'Oro' | 'Diamante';
   lastPurchase?: string;
   preferences: string[];
+  city: string;
+  suggestedSize: string;
+  suggestedCategory: string;
 }
 
 export interface StrategyItem {

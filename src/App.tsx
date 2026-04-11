@@ -33,6 +33,9 @@ const IdentificationService = {
       loyaltyPoints: 1250,
       tier: 'Oro',
       lastPurchase: "2024-03-15",
+      city: "Bogotá",
+      suggestedSize: "M / 8",
+      suggestedCategory: "Abrigos de Lujo",
       preferences: ["Moda Urbana", "Accesorios Artesanales"]
     };
     
@@ -44,14 +47,55 @@ const IdentificationService = {
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isIdentifying, setIsIdentifying] = useState(false);
+  const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
+  const [docNumber, setDocNumber] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
+  const [isFound, setIsFound] = useState(false);
+
+  // Micro-interaction: Search for profile when document number changes
   useEffect(() => {
-    // Simulate automatic identification on mount
-    const identifiedUser = IdentificationService.getIdentifiedUser();
-    if (identifiedUser) {
-      setTimeout(() => setUser(identifiedUser), 1000); // Slight delay for "smart" feel
+    if (docNumber.length > 7) {
+      setIsSearching(true);
+      setIsFound(false);
+      const timer = setTimeout(() => {
+        setIsSearching(false);
+        setIsFound(true); // Simulate finding the user in the global DB
+      }, 1200);
+      return () => clearTimeout(timer);
+    } else {
+      setIsSearching(false);
+      setIsFound(false);
     }
-  }, []);
+  }, [docNumber]);
+
+  // Mock Identification Logic
+  const handleAuth = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsIdentifying(true);
+    
+    // Simulate system recognizing the ID
+    setTimeout(() => {
+      const mockUser: User = {
+        id: "COL-98765",
+        name: "Mariana Valencia",
+        email: "mariana.v@example.co",
+        loyaltyPoints: 1250,
+        tier: 'Oro',
+        city: "Bogotá",
+        suggestedSize: "M / 8",
+        suggestedCategory: "Abrigos de Lujo",
+        preferences: ["Moda Urbana", "Accesorios Artesanales"]
+      };
+      setUser(mockUser);
+      setIsIdentifying(false);
+      setIsLoginModalOpen(false);
+    }, 1500);
+  };
+
+  const handleLogout = () => setUser(null);
 
   return (
     <div className="min-h-screen bg-[#f5f2ed] text-[#1a1a1a] font-sans selection:bg-emerald-100">
@@ -79,87 +123,371 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-4">
-              <AnimatePresence>
-                {user && (
+              <AnimatePresence mode="wait">
+                {!user ? (
+                  <motion.button
+                    key="login-btn"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setIsLoginModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-black/5 rounded-full transition-all"
+                  >
+                    <UserIcon size={16} />
+                    Mi Perfil
+                  </motion.button>
+                ) : (
                   <motion.div 
+                    key="user-badge"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-100"
+                    className="flex items-center gap-4"
                   >
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                    <span className="text-xs font-semibold text-emerald-800 uppercase tracking-wider">
-                      Hola, {user.name.split(' ')[0]}
-                    </span>
+                    <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-100">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                      <span className="text-xs font-semibold text-emerald-800 uppercase tracking-wider">
+                        {user.name.split(' ')[0]}
+                      </span>
+                    </div>
+                    <button 
+                      onClick={handleLogout}
+                      className="text-[10px] uppercase tracking-widest text-black/40 hover:text-black transition-colors"
+                    >
+                      Salir
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
               <button className="p-2 hover:bg-black/5 rounded-full transition-colors">
                 <ShoppingBag size={20} />
               </button>
-              <button 
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="md:hidden p-2 hover:bg-black/5 rounded-full transition-colors"
-              >
-                {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-              </button>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <header className="relative h-[80vh] flex items-center overflow-hidden bg-[#1a1a1a]">
-        <div className="absolute inset-0 opacity-60">
-          <img 
-            src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=2000" 
-            alt="Colombian Fashion"
-            className="w-full h-full object-cover"
-            referrerPolicy="no-referrer"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
-        </div>
+      {/* Hero Section with Dynamic Greeting */}
+      <header className="relative h-[85vh] flex items-center overflow-hidden bg-[#1a1a1a]">
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={user ? 'auth-bg' : 'guest-bg'}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1 }}
+            className="absolute inset-0"
+          >
+            <img 
+              src={user 
+                ? "https://images.unsplash.com/photo-1445205170230-053b830c6050?auto=format&fit=crop&q=80&w=2000" 
+                : "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=2000"} 
+              alt="Fashion Context"
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
+          </motion.div>
+        </AnimatePresence>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            layout
             className="max-w-2xl text-white"
           >
-            <span className="inline-block px-4 py-1 border border-white/30 rounded-full text-xs font-semibold uppercase tracking-[0.3em] mb-6">
-              Lanzamiento Colombia 2026
-            </span>
-            <h1 className="text-6xl md:text-8xl font-serif leading-[0.9] mb-8">
-              La Moda <br />
-              <span className="italic text-emerald-400">es</span> Vida
-            </h1>
-            <p className="text-lg text-white/80 font-light leading-relaxed mb-10 max-w-lg">
-              {STRATEGY.valueProposition}
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <button className="px-8 py-4 bg-white text-black font-bold uppercase tracking-widest hover:bg-emerald-400 transition-all rounded-sm">
-                Explorar Tendencias
-              </button>
-              <button className="px-8 py-4 border border-white/30 text-white font-bold uppercase tracking-widest hover:bg-white/10 transition-all rounded-sm">
-                Nuestra Visión
-              </button>
-            </div>
+            <AnimatePresence mode="wait">
+              {user ? (
+                <motion.div
+                  key="auth-content"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="space-y-6"
+                >
+                  <span className="inline-block px-4 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-[10px] font-bold uppercase tracking-[0.3em] text-emerald-300">
+                    Experiencia Personalizada
+                  </span>
+                  <h1 className="text-5xl md:text-7xl font-serif leading-tight">
+                    Bienvenido de nuevo, {user.name.split(' ')[0]}. <br />
+                    <span className="italic text-emerald-400">Tu estilo te espera.</span>
+                  </h1>
+                  <p className="text-xl md:text-2xl font-light text-white/90 leading-relaxed max-w-xl">
+                    Hoy en <span className="font-medium">{user.city}</span> hace un clima perfecto para <span className="italic border-b border-emerald-400/50">{user.suggestedCategory}</span>. 
+                    Preparamos una selección exclusiva para ti en talla <span className="font-medium">{user.suggestedSize}</span>.
+                  </p>
+                  <div className="pt-4">
+                    <button className="px-10 py-5 bg-emerald-500 text-white font-bold uppercase tracking-widest hover:bg-emerald-400 transition-all rounded-sm shadow-2xl shadow-emerald-500/20">
+                      Ver mi selección
+                    </button>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="guest-content"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="space-y-8"
+                >
+                  <span className="inline-block px-4 py-1 border border-white/30 rounded-full text-[10px] font-bold uppercase tracking-[0.3em]">
+                    Lanzamiento Colombia 2026
+                  </span>
+                  <h1 className="text-6xl md:text-8xl font-serif leading-[0.9]">
+                    La Moda <br />
+                    <span className="italic text-emerald-400">es</span> Vida
+                  </h1>
+                  <p className="text-lg text-white/80 font-light leading-relaxed max-w-lg">
+                    {STRATEGY.valueProposition}
+                  </p>
+                  <div className="flex flex-wrap gap-4 pt-4">
+                    <button 
+                      onClick={() => setIsLoginModalOpen(true)}
+                      className="px-8 py-4 bg-white text-black font-bold uppercase tracking-widest hover:bg-emerald-400 transition-all rounded-sm"
+                    >
+                      Comenzar Experiencia
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </div>
       </header>
 
+      {/* Smart Identification Form (Luxury Tech) */}
+      <AnimatePresence>
+        {isLoginModalOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white w-full max-w-md rounded-[2.5rem] overflow-hidden shadow-2xl relative"
+            >
+              {/* Close Button */}
+              <button 
+                onClick={() => setIsLoginModalOpen(false)}
+                className="absolute top-8 right-8 p-2 hover:bg-black/5 rounded-full transition-colors z-10"
+              >
+                <X size={20} />
+              </button>
+
+              {/* Tabs Header */}
+              <div className="flex border-b border-black/5">
+                <button 
+                  onClick={() => { setActiveTab('login'); setIsFound(false); setDocNumber(''); }}
+                  className={`flex-1 py-6 text-[10px] uppercase tracking-[0.2em] font-bold transition-all ${activeTab === 'login' ? 'text-black bg-white' : 'text-black/30 bg-[#f5f2ed]/50'}`}
+                >
+                  Ya soy parte
+                </button>
+                <button 
+                  onClick={() => { setActiveTab('signup'); setIsFound(false); setDocNumber(''); }}
+                  className={`flex-1 py-6 text-[10px] uppercase tracking-[0.2em] font-bold transition-all ${activeTab === 'signup' ? 'text-black bg-white' : 'text-black/30 bg-[#f5f2ed]/50'}`}
+                >
+                  Quiero unirme
+                </button>
+              </div>
+              
+              <div className="p-10">
+                <div className="text-center mb-10">
+                  <div className="w-12 h-12 bg-[#1a1a1a] flex items-center justify-center rounded-full mx-auto mb-4">
+                    <span className="text-white font-serif text-xl font-bold">V</span>
+                  </div>
+                  <h2 className="text-2xl font-serif mb-2">
+                    {activeTab === 'login' ? 'Bienvenido de vuelta' : 'Crea tu perfil'}
+                  </h2>
+                  <p className="text-xs text-black/40 font-light">
+                    {activeTab === 'login' 
+                      ? 'Accede a tu mundo de moda personalizada.' 
+                      : 'Vinculamos tu identidad para una experiencia sin fricción.'}
+                  </p>
+                </div>
+
+                <form onSubmit={handleAuth} className="space-y-6">
+                  {activeTab === 'login' ? (
+                    <>
+                      <div className="space-y-4">
+                        <div className="relative">
+                          <label className="block text-[10px] uppercase tracking-widest font-bold text-black/40 mb-2 ml-1">
+                            Cédula
+                          </label>
+                          <input 
+                            type="text" 
+                            required
+                            pattern="[0-9]*"
+                            inputMode="numeric"
+                            placeholder="Tu número de identificación"
+                            className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-widest font-bold text-black/40 mb-2 ml-1">
+                            Contraseña
+                          </label>
+                          <input 
+                            type="password" 
+                            required
+                            placeholder="••••••••"
+                            className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm"
+                          />
+                        </div>
+                      </div>
+                      <button 
+                        disabled={isIdentifying}
+                        className="w-full py-5 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-3 shadow-xl shadow-black/10"
+                      >
+                        {isIdentifying ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Reconociendo...
+                          </>
+                        ) : 'Entrar a mi Perfil'}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="space-y-4 max-h-[50vh] overflow-y-auto px-1 custom-scrollbar">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] uppercase tracking-widest font-bold text-black/40 mb-2 ml-1">
+                              Nombres
+                            </label>
+                            <input 
+                              type="text" 
+                              required
+                              placeholder="Ej: Mariana"
+                              className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] uppercase tracking-widest font-bold text-black/40 mb-2 ml-1">
+                              Apellidos
+                            </label>
+                            <input 
+                              type="text" 
+                              required
+                              placeholder="Ej: Valencia"
+                              className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-widest font-bold text-black/40 mb-2 ml-1">
+                            Correo Electrónico
+                          </label>
+                          <input 
+                            type="email" 
+                            required
+                            placeholder="mariana@ejemplo.co"
+                            className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm"
+                          />
+                        </div>
+
+                        <div className="relative">
+                          <label className="block text-[10px] uppercase tracking-widest font-bold text-black/40 mb-2 ml-1">
+                            Cédula
+                          </label>
+                          <input 
+                            type="text" 
+                            required
+                            pattern="[0-9]*"
+                            inputMode="numeric"
+                            value={docNumber}
+                            onChange={(e) => setDocNumber(e.target.value.replace(/\D/g, ''))}
+                            placeholder="Solo números"
+                            className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm"
+                          />
+                          <AnimatePresence>
+                            {isSearching && (
+                              <motion.span 
+                                initial={{ opacity: 0, y: -5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0 }}
+                                className="absolute -bottom-6 left-1 text-[9px] text-blue-600 font-medium italic"
+                              >
+                                Consultando base de datos global...
+                              </motion.span>
+                            )}
+                            {isFound && !isSearching && (
+                              <motion.div 
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="absolute -bottom-14 left-0 right-0 p-3 bg-blue-50 border border-blue-100 rounded-xl z-20"
+                              >
+                                <p className="text-[10px] text-blue-800 leading-tight">
+                                  <span className="font-bold">¡Te encontramos!</span> Solo asigna una contraseña para activar tu perfil en Colombia.
+                                </p>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
+                        <div className={isFound ? "pt-12" : ""}>
+                          <label className="block text-[10px] uppercase tracking-widest font-bold text-black/40 mb-2 ml-1">
+                            Número de Celular
+                          </label>
+                          <input 
+                            type="tel" 
+                            required
+                            placeholder="300 123 4567"
+                            className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-widest font-bold text-black/40 mb-2 ml-1">
+                            Contraseña
+                          </label>
+                          <input 
+                            type="password" 
+                            required
+                            placeholder="••••••••"
+                            className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm"
+                          />
+                        </div>
+                      </div>
+                      <button 
+                        disabled={isIdentifying}
+                        className="w-full py-5 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-3 shadow-xl shadow-black/10 mt-4"
+                      >
+                        {isIdentifying ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Procesando...
+                          </>
+                        ) : 'Unirme al Ecosistema'}
+                      </button>
+                    </>
+                  )}
+                </form>
+                
+                <p className="text-center mt-10 text-[9px] uppercase tracking-[0.2em] text-black/20 leading-relaxed">
+                  Al continuar, aceptas que LA MODA ES VIDA vincule tu identidad <br />
+                  con nuestra base de datos global de estilo.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         
-        {/* Smart Identification Section */}
+        {/* Lifestyle Personalization Section */}
         <section className="mb-32">
           <div className="flex items-center gap-4 mb-12">
             <div className="h-px flex-1 bg-black/10" />
-            <h2 className="font-serif text-3xl italic">Mi Perfil Inteligente</h2>
+            <h2 className="font-serif text-3xl italic">Tu Espacio Personal</h2>
             <div className="h-px flex-1 bg-black/10" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Identification Card */}
+            {/* Personal Card */}
             <motion.div 
               whileHover={{ y: -5 }}
               className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-black/5 flex flex-col md:flex-row gap-8 items-center"
@@ -173,37 +501,34 @@ export default function App() {
                     referrerPolicy="no-referrer"
                   />
                 </div>
-                <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white p-2 rounded-full shadow-lg">
-                  <ShieldCheck size={20} />
-                </div>
               </div>
 
               <div className="flex-1 text-center md:text-left">
                 <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
-                  <h3 className="text-2xl font-bold">{user ? user.name : 'Identificando...'}</h3>
+                  <h3 className="text-2xl font-bold">{user ? user.name : 'Bienvenido'}</h3>
                   {user && (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                      Miembro {user.tier}
+                      Círculo {user.tier}
                     </span>
                   )}
                 </div>
                 <p className="text-black/50 text-sm mb-6">
-                  {user ? `ID: ${user.id} • Sesión Segura Activa` : 'Buscando credenciales en el sistema...'}
+                  {user ? `Inspirado en tu esencia única` : 'Preparando tu experiencia personalizada...'}
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   <div className="p-4 bg-[#f5f2ed] rounded-2xl">
-                    <span className="block text-[10px] uppercase tracking-wider text-black/40 mb-1">Talla Sugerida</span>
+                    <span className="block text-[10px] uppercase tracking-wider text-black/40 mb-1">Tu Ajuste Ideal</span>
                     <span className="font-bold">M / 8</span>
                   </div>
                   <div className="p-4 bg-[#f5f2ed] rounded-2xl">
-                    <span className="block text-[10px] uppercase tracking-wider text-black/40 mb-1">Clima Local</span>
+                    <span className="block text-[10px] uppercase tracking-wider text-black/40 mb-1">Entorno</span>
                     <span className="font-bold flex items-center gap-1">
                       <MapPin size={12} /> Bogotá, 14°C
                     </span>
                   </div>
                   <div className="p-4 bg-[#f5f2ed] rounded-2xl hidden sm:block">
-                    <span className="block text-[10px] uppercase tracking-wider text-black/40 mb-1">Última Visita</span>
-                    <span className="font-bold">Hoy</span>
+                    <span className="block text-[10px] uppercase tracking-wider text-black/40 mb-1">Tu Estilo</span>
+                    <span className="font-bold">Vibrante</span>
                   </div>
                 </div>
               </div>

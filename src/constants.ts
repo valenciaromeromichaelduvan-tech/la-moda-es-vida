@@ -11,13 +11,19 @@ export const STRATEGY = {
     { name: "Accesibilidad Consciente", description: "Moda aspiracional con un modelo de precios y logística adaptado a la realidad nacional." },
     { name: "Pasión Local", description: "Cada colección respira el ritmo y la calidez de nuestras regiones." }
   ],
-  valueProposition: "LA MODA ES VIDA no es solo una tienda; es un ecosistema inteligente que te reconoce. Mientras otros te piden llenar formularios, nosotros te damos la bienvenida por tu nombre, recordamos tus tallas y te sugerimos tendencias basadas en el clima de tu ciudad y tus eventos locales, eliminando la fricción del e-commerce tradicional."
+  valueProposition: "LA MODA ES VIDA es la esencia del estilo contemporáneo en Colombia. Una invitación a descubrir una moda que respira tu ritmo, celebra tu identidad y anticipa tus deseos con la sofisticación de una firma global y la calidez de nuestra tierra. Aquí, tu estilo no solo se viste, se vive.",
+  slogans: [
+    "Tu estilo, nuestra inspiración.",
+    "La esencia de ser tú.",
+    "Moda que respira tu ritmo.",
+    "Sofisticación global, alma colombiana."
+  ]
 };
 
 export const SITEMAP = [
   { name: "Inicio", path: "/" },
   { name: "Tendencias Colombianas", path: "/tendencias" },
-  { name: "Mi Perfil Inteligente", path: "/perfil" },
+  { name: "Tu Espacio Personal", path: "/perfil" },
   { name: "Fidelidad & Beneficios", path: "/fidelidad" },
   { name: "Colecciones", sub: ["Mujer", "Hombre", "Accesorios", "Ediciones Especiales"] },
   { name: "Sostenibilidad", path: "/sostenibilidad" }
