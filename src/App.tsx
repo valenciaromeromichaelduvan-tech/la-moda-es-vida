@@ -119,6 +119,12 @@ export default function App() {
     password: ''
   });
 
+  // Profile Edit State
+  const [profileName, setProfileName] = useState("Mariana");
+  const [profileLastName, setProfileLastName] = useState("Valencia");
+  const [profileEmail, setProfileEmail] = useState("mariana.v@example.co");
+  const [profilePhone, setProfilePhone] = useState("300 123 4567");
+
   const isSignupValid = 
     signupForm.firstName.length > 0 &&
     signupForm.lastName.length > 0 &&
@@ -130,6 +136,15 @@ export default function App() {
   const handleSignupChange = (field: string, value: string) => {
     setSignupForm(prev => ({ ...prev, [field]: value }));
   };
+
+  // Sync profile fields when user changes
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name.split(' ')[0] || "");
+      setProfileLastName(user.name.split(' ').slice(1).join(' ') || "");
+      setProfileEmail(user.email);
+    }
+  }, [user]);
 
   const CATEGORIES = ["TODO", "PANTALONES", "CAMISAS", "ZAPATOS", "ABRIGOS", "CHAQUETAS"];
 
@@ -266,6 +281,17 @@ export default function App() {
         return prev + 10;
       });
     }, 200);
+  };
+
+  const handleSaveProfile = () => {
+    if (user) {
+      setUser({
+        ...user,
+        name: `${profileName} ${profileLastName}`,
+        email: profileEmail
+      });
+    }
+    setIsProfileModalOpen(false);
   };
 
   const scrollToSection = (id: string) => {
@@ -689,7 +715,7 @@ export default function App() {
                   </div>
                   
                   <button 
-                    onClick={() => setIsProfileModalOpen(false)}
+                    onClick={handleSaveProfile}
                     className="w-full py-4 bg-[#1a1a1a] text-white rounded-2xl text-[9px] font-bold uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10"
                   >
                     Guardar y Cerrar
@@ -739,25 +765,50 @@ export default function App() {
                             <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-1">
                                 <label className="text-[8px] font-bold text-black/30 uppercase tracking-widest ml-1">Nombres</label>
-                                <input type="text" readOnly value={user?.name.split(' ')[0]} className="w-full px-4 py-3 bg-[#f5f2ed] border-none rounded-xl text-xs outline-none" />
+                                <input 
+                                  type="text" 
+                                  value={profileName} 
+                                  onChange={(e) => setProfileName(e.target.value)}
+                                  className="w-full px-4 py-3 bg-[#f5f2ed] border-none rounded-xl text-xs outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-medium" 
+                                />
                               </div>
                               <div className="space-y-1">
                                 <label className="text-[8px] font-bold text-black/30 uppercase tracking-widest ml-1">Apellidos</label>
-                                <input type="text" readOnly value={user?.name.split(' ').slice(1).join(' ')} className="w-full px-4 py-3 bg-[#f5f2ed] border-none rounded-xl text-xs outline-none" />
+                                <input 
+                                  type="text" 
+                                  value={profileLastName} 
+                                  onChange={(e) => setProfileLastName(e.target.value)}
+                                  className="w-full px-4 py-3 bg-[#f5f2ed] border-none rounded-xl text-xs outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-medium" 
+                                />
                               </div>
                             </div>
                             <div className="space-y-1">
                               <label className="text-[8px] font-bold text-black/30 uppercase tracking-widest ml-1">Correo Electrónico</label>
-                              <input type="email" value={user?.email} className="w-full px-4 py-3 bg-[#f5f2ed] border-none rounded-xl text-xs outline-none focus:ring-1 focus:ring-emerald-500" />
+                              <input 
+                                type="email" 
+                                value={profileEmail} 
+                                onChange={(e) => setProfileEmail(e.target.value)}
+                                className="w-full px-4 py-3 bg-[#f5f2ed] border-none rounded-xl text-xs outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-medium" 
+                              />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-1">
                                 <label className="text-[8px] font-bold text-black/30 uppercase tracking-widest ml-1">Cédula / NIT</label>
-                                <input type="text" readOnly value={user?.id} className="w-full px-4 py-3 bg-[#f5f2ed] border-none rounded-xl text-xs outline-none" />
+                                <input 
+                                  type="text" 
+                                  readOnly 
+                                  value={user?.id} 
+                                  className="w-full px-4 py-3 bg-[#f5f2ed] border-none rounded-xl text-xs outline-none cursor-not-allowed text-black/40 font-bold" 
+                                />
                               </div>
                               <div className="space-y-1">
                                 <label className="text-[8px] font-bold text-black/30 uppercase tracking-widest ml-1">Celular</label>
-                                <input type="tel" value="300 123 4567" className="w-full px-4 py-3 bg-[#f5f2ed] border-none rounded-xl text-xs outline-none focus:ring-1 focus:ring-emerald-500" />
+                                <input 
+                                  type="tel" 
+                                  value={profilePhone} 
+                                  onChange={(e) => setProfilePhone(e.target.value)}
+                                  className="w-full px-4 py-3 bg-[#f5f2ed] border-none rounded-xl text-xs outline-none focus:ring-1 focus:ring-emerald-500 transition-all font-medium" 
+                                />
                               </div>
                             </div>
                           </div>
