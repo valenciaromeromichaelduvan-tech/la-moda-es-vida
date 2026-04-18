@@ -15,3 +15,17 @@ export interface StrategyItem {
   name: string;
   description: string;
 }
+
+export interface Product {
+  id: number;
+  cat: string;
+  title: string;
+  price: string;
+  tag: string;
+  img: string;
+}
+
+export interface CartItem extends Product {
+  quantity: number;
+  size: string;
+}
