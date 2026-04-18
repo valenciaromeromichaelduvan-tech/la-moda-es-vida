@@ -1,3 +1,13 @@
+export interface Address {
+  id: string;
+  name: string;
+  city: string;
+  address: string;
+  details?: string;
+  neighborhood: string;
+  isDefault: boolean;
+}
+
 export interface User {
   id: string;
   name: string;

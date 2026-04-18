@@ -24,10 +24,17 @@ import {
   Wallet,
   Truck,
   CheckCircle,
-  PiggyBank
+  PiggyBank,
+  AlertCircle,
+  Settings,
+  LogOut,
+  Compass,
+  Cloud,
+  FileText,
+  Upload
 } from 'lucide-react';
 import { STRATEGY, SITEMAP } from './constants';
-import { User, CartItem, Product } from './types';
+import { User, CartItem, Product, Address } from './types';
 
 // Mock Identification Service
 const IdentificationService = {
@@ -70,6 +77,59 @@ export default function App() {
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'pse' | 'wallet'>('card');
   const [isPaying, setIsPaying] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
+  const [isQuickPayConfirm, setIsQuickPayConfirm] = useState(false);
+  const [isOneClickProcessing, setIsOneClickProcessing] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isAddressSelectOpen, setIsAddressSelectOpen] = useState(false);
+  const [isAddAddressFormOpen, setIsAddAddressFormOpen] = useState(false);
+  const [docToUpload, setDocToUpload] = useState('CEDULA');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [profileActiveTab, setProfileActiveTab] = useState<'details' | 'docs'>('details');
+  const [uploadedDocsHistory, setUploadedDocsHistory] = useState<{name: string, type: string, date: string}[]>([
+    { name: "Copia de Cédula", type: "PDF", date: "2024-03-20" }
+  ]);
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([
+    {
+      id: "COL-ADDR-01",
+      name: "Principal",
+      city: "Bogotá",
+      address: "Calle 15 #X-XX",
+      neighborhood: "El Chicó",
+      details: "Edificio El Roble, Apto 402",
+      isDefault: true
+    }
+  ]);
+  const [newAddress, setNewAddress] = useState({
+    city: 'Bogotá',
+    address: '',
+    details: '',
+    neighborhood: '',
+    name: ''
+  });
+
+  // Signup Form State & Validation
+  const [signupForm, setSignupForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: ''
+  });
+
+  const isSignupValid = 
+    signupForm.firstName.length > 0 &&
+    signupForm.lastName.length > 0 &&
+    signupForm.email.includes('@') &&
+    docNumber.length >= 8 &&
+    signupForm.phone.length > 0 &&
+    signupForm.password.length >= 8;
+
+  const handleSignupChange = (field: string, value: string) => {
+    setSignupForm(prev => ({ ...prev, [field]: value }));
+  };
 
   const CATEGORIES = ["TODO", "PANTALONES", "CAMISAS", "ZAPATOS", "ABRIGOS", "CHAQUETAS"];
 
@@ -143,9 +203,42 @@ export default function App() {
       setIsCartOpen(false);
       setIsLoginModalOpen(true);
     } else {
-      setIsCartOpen(false);
-      setIsCheckoutOpen(true);
+      setIsAddressSelectOpen(true);
     }
+  };
+
+  const confirmAddress = (useSaved: boolean) => {
+    setIsAddressSelectOpen(false);
+    setIsQuickPayConfirm(true);
+  };
+
+  const handleAddAddress = (e: React.FormEvent) => {
+    e.preventDefault();
+    const addr: Address = {
+      id: `COL-ADDR-${Date.now()}`,
+      name: newAddress.name || 'Sin nombre',
+      city: newAddress.city,
+      address: newAddress.address,
+      neighborhood: newAddress.neighborhood,
+      details: newAddress.details,
+      isDefault: false
+    };
+    setSavedAddresses(prev => [...prev, addr]);
+    setIsAddAddressFormOpen(false);
+    setNewAddress({ city: 'Bogotá', address: '', details: '', neighborhood: '', name: '' });
+  };
+
+  const handleOneClickPay = () => {
+    setIsOneClickProcessing(true);
+    setIsQuickPayConfirm(false);
+    
+    setTimeout(() => {
+      setIsOneClickProcessing(false);
+      setIsCartOpen(false);
+      setOrderComplete(true);
+      setIsCheckoutOpen(true);
+      setCartItems([]);
+    }, 2000);
   };
 
   const processPayment = () => {
@@ -155,6 +248,24 @@ export default function App() {
       setOrderComplete(true);
       setCartItems([]);
     }, 2500);
+  };
+
+  const handleLocalFileUpload = () => {
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadSuccess(false);
+
+    const interval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIsUploading(false);
+          setUploadSuccess(true);
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 200);
   };
 
   const scrollToSection = (id: string) => {
@@ -232,20 +343,54 @@ export default function App() {
                       <span className="text-[9px] font-bold uppercase tracking-widest">{user.name.toUpperCase()} - ACTIVO</span>
                     </div>
 
-                    <button 
-                      onClick={() => handleNavClick("MI ESPACIO & BENEFICIOS")}
-                      className="px-6 py-2 bg-[#1a1a1a] text-white rounded-full hover:bg-emerald-600 flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest transition-all shadow-md group"
-                    >
-                      <Star size={12} className="fill-emerald-400 group-hover:fill-white" />
-                      HOLA, {user.name.split(' ')[0].toUpperCase()}
-                    </button>
+                    <div className="relative">
+                      <button 
+                        onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                        className="px-6 py-2 bg-[#1a1a1a] text-white rounded-full hover:bg-emerald-600 flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest transition-all shadow-md group"
+                      >
+                        <Star size={12} className="fill-emerald-400 group-hover:fill-white" />
+                        HOLA, {user.name.split(' ')[0].toUpperCase()}
+                      </button>
 
-                    <button 
-                      onClick={handleLogout}
-                      className="text-[9px] font-bold uppercase tracking-widest text-black/40 hover:text-black transition-colors underline underline-offset-4"
-                    >
-                      SALIR
-                    </button>
+                      <AnimatePresence>
+                        {isUserMenuOpen && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className="absolute right-0 mt-3 w-64 bg-white rounded-[2rem] shadow-2xl border border-black/5 overflow-hidden z-[100]"
+                          >
+                            <div className="p-4 border-b border-black/5">
+                              <p className="text-[10px] text-black/40 font-bold uppercase tracking-widest px-4 pt-2">ID Único: {user.id}</p>
+                            </div>
+                            <div className="p-2">
+                              <button 
+                                onClick={() => { setIsUserMenuOpen(false); scrollToSection('ecosistema-dashboard'); }}
+                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#f5f2ed] rounded-2xl transition-all text-left group"
+                              >
+                                <Compass size={16} className="text-emerald-600" />
+                                <span className="text-[10px] font-bold uppercase tracking-widest">Mi Espacio & Beneficios</span>
+                              </button>
+                              <button 
+                                onClick={() => { setIsUserMenuOpen(false); setIsProfileModalOpen(true); }}
+                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#f5f2ed] rounded-2xl transition-all text-left group"
+                              >
+                                <Settings size={16} className="text-emerald-600" />
+                                <span className="text-[10px] font-bold uppercase tracking-widest">Configuración de Perfil</span>
+                              </button>
+                              <div className="h-px bg-black/5 my-2 mx-4" />
+                              <button 
+                                onClick={() => { setIsUserMenuOpen(false); handleLogout(); }}
+                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 rounded-2xl transition-all text-left group"
+                              >
+                                <LogOut size={16} className="text-red-500" />
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-red-500">Cerrar Sesión</span>
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </motion.div>
                 ) : (
                   <motion.button
@@ -389,7 +534,38 @@ export default function App() {
 
               {/* Footer / Summary */}
               {cartItems.length > 0 && (
-                <div className="p-8 bg-[#fcfbf9] border-t border-black/5">
+                <div className="p-8 bg-[#fcfbf9] border-t border-black/5 relative overflow-hidden">
+                  <AnimatePresence>
+                    {isQuickPayConfirm && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 50 }}
+                        className="absolute inset-0 bg-white/95 backdrop-blur-md p-8 z-20 flex flex-col justify-center"
+                      >
+                        <p className="text-sm font-serif italic mb-2 tracking-tight">¿Usar tus datos guardados?</p>
+                        <div className="space-y-1 mb-6">
+                          <p className="text-[10px] text-black/60 font-medium">ENVIAR A: Calle 15 #X-XX, {user?.city}</p>
+                          <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest italic">PAGO SEGURO: **** 4321</p>
+                        </div>
+                        <div className="flex gap-3">
+                          <button 
+                            onClick={() => setIsQuickPayConfirm(false)}
+                            className="flex-1 py-4 border border-black/10 rounded-xl text-[9px] font-bold uppercase tracking-widest hover:bg-black/5 transition-colors"
+                          >
+                            Cerrar
+                          </button>
+                          <button 
+                            onClick={handleOneClickPay}
+                            className="flex-2 py-4 bg-emerald-600 text-white rounded-xl text-[9px] font-bold uppercase tracking-widest hover:bg-emerald-700 shadow-xl shadow-emerald-100 transition-all active:scale-95"
+                          >
+                            SÍ, PAGAR YA
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   <div className="flex justify-between items-end mb-6">
                     <div>
                       <p className="text-[10px] uppercase tracking-widest font-bold text-black/40 mb-1">Subtotal estimado</p>
@@ -405,10 +581,20 @@ export default function App() {
                   
                   <button 
                     onClick={handleCheckout}
-                    className="w-full py-5 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest rounded-2xl hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-3 active:scale-95"
+                    disabled={isOneClickProcessing}
+                    className="w-full py-5 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest rounded-2xl hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
                   >
-                    Finalizar Compra
-                    <ChevronRight size={16} />
+                    {isOneClickProcessing ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span className="text-[10px]">Procesando con tu método predeterminado...</span>
+                      </>
+                    ) : (
+                      <>
+                        Finalizar Compra
+                        <ChevronRight size={16} />
+                      </>
+                    )}
                   </button>
                   
                   <p className="text-center mt-6 text-[9px] uppercase tracking-[0.2em] text-black/30 leading-relaxed">
@@ -459,7 +645,413 @@ export default function App() {
         </div>
       </header>
 
-      {/* Smart Checkout Modal */}
+      {/* Profile Configuration Modal */}
+      <AnimatePresence>
+        {isProfileModalOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl overflow-hidden"
+            >
+              <div className="flex flex-col lg:flex-row h-full lg:h-[80vh]">
+                {/* Modal Sidebar */}
+                <div className="lg:w-80 bg-[#f5f2ed] p-10 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-serif text-3xl mb-2">Mi Perfil</h3>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-black/40 mb-10 italic">Control de Identidad Ecosistema</p>
+                    
+                    <div className="space-y-4">
+                      <div className="p-6 bg-white rounded-3xl border border-black/5 shadow-sm">
+                        <div className="flex items-center gap-3 mb-2">
+                          <CheckCircle size={16} className="text-emerald-600" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Estado Activo</span>
+                        </div>
+                        <p className="text-[9px] text-black/40 font-light leading-snug">Tu ID Único ({user?.id}) está verificado y sincronizado con todo el ecosistema.</p>
+                      </div>
+                      
+                      <div className="p-6 bg-emerald-600 text-white rounded-3xl shadow-xl shadow-emerald-100">
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest mb-2 opacity-60">Nivel de Confianza</h4>
+                        <div className="flex justify-between items-end mb-1">
+                          <span className="text-2xl font-serif italic">Premium</span>
+                          <span className="text-[10px] font-bold uppercase">98%</span>
+                        </div>
+                        <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
+                          <div className="w-[98%] h-full bg-white rounded-full" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <button 
+                    onClick={() => setIsProfileModalOpen(false)}
+                    className="w-full py-4 bg-[#1a1a1a] text-white rounded-2xl text-[9px] font-bold uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10"
+                  >
+                    Guardar y Cerrar
+                  </button>
+                </div>
+
+                {/* Modal Content */}
+                <div className="flex-1 flex flex-col overflow-hidden bg-white">
+                  {/* Tabs Navigation */}
+                  <div className="flex border-b border-black/5 px-8 md:px-12 bg-white sticky top-0 z-10">
+                    <button 
+                      onClick={() => setProfileActiveTab('details')}
+                      className={`py-8 px-4 text-[10px] font-bold uppercase tracking-[0.2em] relative transition-all ${profileActiveTab === 'details' ? 'text-emerald-600' : 'text-black/30 hover:text-black'}`}
+                    >
+                      Mis Datos y Logística
+                      {profileActiveTab === 'details' && (
+                        <motion.div layoutId="profileTab" className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-600" />
+                      )}
+                    </button>
+                    <button 
+                      onClick={() => setProfileActiveTab('docs')}
+                      className={`py-8 px-4 text-[10px] font-bold uppercase tracking-[0.2em] relative transition-all ${profileActiveTab === 'docs' ? 'text-emerald-600' : 'text-black/30 hover:text-black'}`}
+                    >
+                      Gestión de Documentación
+                      {profileActiveTab === 'docs' && (
+                        <motion.div layoutId="profileTab" className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-600" />
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="flex-1 p-8 md:p-12 overflow-y-auto custom-scrollbar">
+                    <AnimatePresence mode="wait">
+                      {profileActiveTab === 'details' ? (
+                        <motion.div 
+                          key="details-tab"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="grid grid-cols-1 md:grid-cols-2 gap-12"
+                        >
+                          {/* Section 1: Personal Data */}
+                          <div className="space-y-6">
+                            <div className="flex items-center gap-3 mb-4">
+                              <UserIcon size={18} className="text-emerald-600" />
+                              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/60">Datos de Identidad</h4>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <label className="text-[8px] font-bold text-black/30 uppercase tracking-widest ml-1">Nombres</label>
+                                <input type="text" readOnly value={user?.name.split(' ')[0]} className="w-full px-4 py-3 bg-[#f5f2ed] border-none rounded-xl text-xs outline-none" />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[8px] font-bold text-black/30 uppercase tracking-widest ml-1">Apellidos</label>
+                                <input type="text" readOnly value={user?.name.split(' ').slice(1).join(' ')} className="w-full px-4 py-3 bg-[#f5f2ed] border-none rounded-xl text-xs outline-none" />
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[8px] font-bold text-black/30 uppercase tracking-widest ml-1">Correo Electrónico</label>
+                              <input type="email" value={user?.email} className="w-full px-4 py-3 bg-[#f5f2ed] border-none rounded-xl text-xs outline-none focus:ring-1 focus:ring-emerald-500" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <label className="text-[8px] font-bold text-black/30 uppercase tracking-widest ml-1">Cédula / NIT</label>
+                                <input type="text" readOnly value={user?.id} className="w-full px-4 py-3 bg-[#f5f2ed] border-none rounded-xl text-xs outline-none" />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[8px] font-bold text-black/30 uppercase tracking-widest ml-1">Celular</label>
+                                <input type="tel" value="300 123 4567" className="w-full px-4 py-3 bg-[#f5f2ed] border-none rounded-xl text-xs outline-none focus:ring-1 focus:ring-emerald-500" />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Section 2: Logistics */}
+                          <div className="space-y-6">
+                            <div className="flex items-center gap-3 mb-4">
+                              <MapPin size={18} className="text-emerald-600" />
+                              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/60">Logística y Entrega</h4>
+                            </div>
+                            
+                            <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+                              {savedAddresses.map(addr => (
+                                <div key={addr.id} className={`p-6 rounded-3xl border relative group transition-all ${addr.isDefault ? 'bg-emerald-50 border-emerald-100' : 'bg-[#f5f2ed] border-black/5 hover:border-emerald-300'}`}>
+                                  {addr.isDefault && (
+                                    <span className="absolute top-4 right-4 px-2 py-0.5 bg-emerald-600 text-[8px] text-white font-bold rounded-full uppercase">Principal</span>
+                                  )}
+                                  <div className="space-y-1">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-black/30 mb-1">{addr.name}</p>
+                                    <p className="text-xs font-bold text-black">{addr.address}</p>
+                                    <p className="text-[10px] text-black/50 italic">{addr.details && `${addr.details} | `}{addr.neighborhood} | {addr.city}</p>
+                                  </div>
+                                  <div className="mt-4 flex gap-4">
+                                    <button className="text-[9px] font-bold uppercase tracking-widest text-emerald-600 hover:underline">Editar</button>
+                                    {!addr.isDefault && <button className="text-[9px] font-bold uppercase tracking-widest text-black/30 hover:text-black hover:underline" onClick={() => {
+                                      setSavedAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === addr.id })));
+                                    }}>Marcar principal</button>}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            <button 
+                              onClick={() => setIsAddAddressFormOpen(true)}
+                              className="w-full py-4 border-2 border-dashed border-black/10 rounded-2xl text-[9px] font-bold uppercase tracking-widest text-black/40 hover:border-emerald-300 hover:text-emerald-600 transition-all"
+                            >
+                              + Agregar Nueva Dirección
+                            </button>
+                          </div>
+
+                          {/* Section 3: Payments */}
+                          <div className="md:col-span-2 space-y-6 pt-12 border-t border-black/5">
+                            <div className="flex items-center gap-3 mb-4">
+                              <Wallet size={18} className="text-emerald-600" />
+                              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/60">Billetera Digital & Pagos</h4>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                              {/* Saved Card */}
+                              <div className="p-6 bg-[#1a1a1a] text-white rounded-3xl shadow-xl relative overflow-hidden h-40 flex flex-col justify-between">
+                                <div className="absolute top-0 right-0 p-4 opacity-10"><CreditCard size={60} /></div>
+                                <div className="flex justify-between items-start">
+                                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/40">Mastercard Pre-cargada</span>
+                                  <div className="w-8 h-8 rounded-full bg-orange-400/20" />
+                                </div>
+                                <div>
+                                  <p className="text-lg font-mono tracking-tighter">**** **** **** 4321</p>
+                                  <p className="text-[8px] uppercase tracking-widest text-emerald-400 font-bold mt-1">Vinculada a ID: {user?.id.split('-')[1]}</p>
+                                </div>
+                              </div>
+                              
+                              {/* Digital Connections */}
+                              <div className="p-6 bg-white border border-black/5 rounded-3xl flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer">
+                                <div className="flex items-center gap-4">
+                                  <div className="w-12 h-12 bg-[#81308a]/10 text-[#81308a] rounded-2xl flex items-center justify-center font-bold">N</div>
+                                  <div>
+                                    <p className="text-xs font-bold">Nequi</p>
+                                    <p className="text-[10px] text-black/40 italic">300 *** 4567</p>
+                                  </div>
+                                </div>
+                                <span className="text-[9px] font-bold text-emerald-600">CONECTADO</span>
+                              </div>
+
+                              <div className="p-6 bg-white border border-black/5 rounded-3xl flex items-center justify-between group hover:shadow-lg transition-all cursor-pointer opacity-50 grayscale hover:grayscale-0 hover:opacity-100">
+                                <div className="flex items-center gap-4">
+                                  <div className="w-12 h-12 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center"><Wallet size={20} /></div>
+                                  <div>
+                                    <p className="text-xs font-bold">Daviplata</p>
+                                    <p className="text-[10px] text-black/40 italic">No vinculado</p>
+                                  </div>
+                                </div>
+                                <span className="text-[9px] font-bold text-black/40">VINCULAR</span>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ) : (
+                        <motion.div 
+                          key="docs-tab"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="grid grid-cols-1 md:grid-cols-2 gap-12"
+                        >
+                          {/* File Upload Module */}
+                          <div className="space-y-6">
+                            <div className="flex items-center gap-3 mb-4">
+                              <Upload size={18} className="text-emerald-600" />
+                              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/60">Carga de Documentación Legal</h4>
+                            </div>
+                            
+                            <div className="p-8 bg-white rounded-[3rem] border border-black/5 shadow-xl space-y-6">
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-black/30 uppercase tracking-widest ml-1">Selecciona el Documento</label>
+                                <select 
+                                  value={docToUpload}
+                                  onChange={(e) => setDocToUpload(e.target.value)}
+                                  className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-2xl text-[12px] font-bold outline-none cursor-pointer appearance-none"
+                                >
+                                  <option value="CEDULA">Copia de Cédula (Escaneada)</option>
+                                  <option value="RUT">Registro Único Tributario (RUT)</option>
+                                  <option value="CCB">Cámara de Comercio (Empresas)</option>
+                                </select>
+                              </div>
+
+                              <div 
+                                onClick={handleLocalFileUpload}
+                                className={`border-2 border-dashed rounded-[2.5rem] p-12 flex flex-col items-center justify-center transition-all cursor-pointer ${uploadSuccess ? 'border-emerald-200 bg-emerald-50' : 'border-black/5 hover:border-emerald-300 bg-white'}`}
+                              >
+                                {uploadSuccess ? (
+                                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex flex-col items-center text-center">
+                                    <CheckCircle size={40} className="text-emerald-600 mb-4" />
+                                    <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest">¡Documento Cargado con éxito!</p>
+                                    <p className="text-[10px] text-black/40 mt-1 italic">Analizando datos fiscales...</p>
+                                  </motion.div>
+                                ) : isUploading ? (
+                                  <div className="w-full max-w-xs space-y-4">
+                                    <div className="flex justify-between text-[10px] font-bold text-black/40 uppercase tracking-widest">
+                                      <span>Procesando...</span>
+                                      <span>{uploadProgress}%</span>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-black/5 rounded-full overflow-hidden">
+                                      <motion.div 
+                                        initial={{ width: 0 }} 
+                                        animate={{ width: `${uploadProgress}%` }} 
+                                        className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" 
+                                      />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-6 text-emerald-600">
+                                      <Cloud size={32} />
+                                    </div>
+                                    <p className="text-xs text-black/50 font-medium uppercase tracking-[0.1em] text-center px-4">
+                                      Arrastra tus archivos aquí o haz clic para buscarlos
+                                    </p>
+                                    <p className="text-[9px] text-black/20 font-bold uppercase tracking-widest mt-4">PDF, JPG, PNG (Máx 5MB)</p>
+                                  </>
+                                )}
+                              </div>
+
+                              <p className="text-[10px] text-black/40 leading-relaxed italic border-t border-black/5 pt-6 text-center">
+                                <span className="font-bold text-emerald-600 block mb-1 uppercase tracking-widest">Aviso de Privacidad</span>
+                                Toda la documentación se vincula a tu ID Único para agilizar trámites empresariales y facturación automática.
+                              </p>
+
+                              <button 
+                                onClick={handleLocalFileUpload}
+                                disabled={!uploadSuccess || isUploading}
+                                className="w-full py-5 bg-emerald-600 text-white rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 disabled:opacity-30 disabled:shadow-none flex items-center justify-center gap-3 active:scale-95"
+                              >
+                                <Upload size={14} />
+                                Vincular al Ecosistema
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* History Table */}
+                          <div className="space-y-6">
+                            <div className="flex items-center gap-3 mb-4">
+                              <FileText size={18} className="text-emerald-600" />
+                              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-black/60">Historial de Documentación</h4>
+                            </div>
+                            
+                            <div className="space-y-3">
+                              {uploadedDocsHistory.map((doc, idx) => (
+                                <div key={idx} className="p-6 bg-[#f5f2ed] rounded-3xl border border-black/5 flex items-center justify-between group hover:bg-white hover:shadow-lg transition-all">
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
+                                      <ShieldCheck size={20} />
+                                    </div>
+                                    <div>
+                                      <p className="text-xs font-bold text-black">{doc.name}</p>
+                                      <p className="text-[9px] text-black/40 font-medium tracking-widest uppercase">{doc.type} • CARGADO EL {doc.date}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <CheckCircle size={14} className="text-emerald-600" />
+                                    <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">VERIFICADO</span>
+                                  </div>
+                                </div>
+                              ))}
+                              
+                              {uploadSuccess && (
+                                <motion.div 
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  className="p-6 bg-white rounded-3xl border border-emerald-100 flex items-center justify-between shadow-lg shadow-emerald-50"
+                                >
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
+                                      <ShieldCheck size={20} />
+                                    </div>
+                                    <div>
+                                      <p className="text-xs font-bold text-black">{docToUpload === 'CEDULA' ? 'Copia de Cédula' : docToUpload === 'RUT' ? 'RUT Actualizado' : 'Cámara de Comercio'}</p>
+                                      <p className="text-[9px] text-black/40 font-medium tracking-widest uppercase">CARGADO RECIENTEMENTE</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                                    <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">PROCESANDO...</span>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </div>
+
+                            <div className="p-8 bg-black text-white rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+                              <div className="absolute -right-10 -bottom-10 opacity-10"><ShieldCheck size={180} /></div>
+                              <h5 className="font-serif text-2xl mb-2 italic">Certificación B2B</h5>
+                              <p className="text-[10px] text-white/40 leading-relaxed font-light mb-6">
+                                Al completar tu documentación legal, habilitas el modo empresarial de alta gama, permitiendo facturación electrónica automática y logística prioritaria para oficinas.
+                              </p>
+                              <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-full text-[8px] font-bold uppercase tracking-widest">
+                                <Star size={10} className="fill-emerald-400" />
+                                Validado por IA Ecosistema
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Address Selection Prompt (Logic Flow) */}
+      <AnimatePresence>
+        {isAddressSelectOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-md w-full text-center"
+            >
+              <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <MapPin size={32} />
+              </div>
+              <h3 className="font-serif text-3xl mb-4">¿A dónde enviamos tu estilo hoy?</h3>
+              <p className="text-sm text-black/40 font-light mb-8 italic">Confirma tu logística para una experiencia sin fricción.</p>
+              
+              <div className="space-y-3">
+                {savedAddresses.map(addr => (
+                  <button 
+                    key={addr.id}
+                    onClick={() => confirmAddress(true)}
+                    className="w-full p-6 bg-[#1a1a1a] text-white rounded-2xl hover:bg-emerald-600 transition-all text-left relative group"
+                  >
+                    <div className="flex justify-between items-start">
+                      <span className="block text-[8px] font-bold uppercase tracking-widest text-white/40 mb-1">{addr.name} {addr.isDefault ? '(Principal)' : ''}</span>
+                      <MapPin size={14} className="text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <span className="block font-bold">{addr.address}</span>
+                    <span className="block text-[10px] text-white/50">{addr.city}</span>
+                  </button>
+                ))}
+                
+                <button 
+                   onClick={() => setIsAddAddressFormOpen(true)}
+                   className="w-full p-6 border-2 border-black/5 rounded-2xl hover:bg-[#f5f2ed] transition-all text-left group"
+                >
+                  <span className="block text-[8px] font-bold uppercase tracking-widest text-black/30 mb-1">Nueva para este pedido</span>
+                  <span className="block font-bold group-hover:text-emerald-600 transition-all">+ Usar una dirección diferente</span>
+                </button>
+              </div>
+              
+              <button 
+                onClick={() => setIsAddressSelectOpen(false)}
+                className="mt-8 text-[10px] font-bold uppercase tracking-widest text-black/20 hover:text-black transition-all"
+              >
+                Volver al carrito
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {isCheckoutOpen && (
           <motion.div 
@@ -478,17 +1070,38 @@ export default function App() {
                   <motion.div 
                     initial={{ scale: 0 }}
                     animate={{ scale: 1, rotate: 360 }}
-                    className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto"
+                    className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-emerald-100"
                   >
                     <CheckCircle size={48} />
                   </motion.div>
-                  <h2 className="font-serif text-5xl">¡Pedido Confirmado!</h2>
-                  <p className="text-black/50 text-xl font-light max-w-md mx-auto">
-                    Tu estilo está en camino, {user?.name.split(' ')[0]}. Hemos enviado los detalles a tu correo verificado.
-                  </p>
+                  <div className="space-y-4">
+                    <h2 className="font-serif text-5xl">¡Listo, {user?.name.split(' ')[0]}!</h2>
+                    <p className="text-black/50 text-xl font-light max-w-md mx-auto leading-relaxed">
+                      Tu pedido está en camino. Gracias por confiar en el ecosistema que te conoce.
+                    </p>
+                  </div>
+                  
+                  <div className="p-8 bg-[#f5f2ed] rounded-[2rem] border border-black/5 max-w-md mx-auto text-left">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-black/30 mb-4 pb-2 border-b border-black/5">Resumen ultra rápido</p>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-black/40">Enviando a:</span>
+                        <span className="font-bold">Calle 15 #X-XX, {user?.city}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-black/40">Pago:</span>
+                        <span className="font-bold">Tarjeta **** 4321</span>
+                      </div>
+                      <div className="flex justify-between text-lg font-serif pt-2 border-t border-black/5">
+                        <span className="text-emerald-600">Total:</span>
+                        <span className="font-bold">${cartSubtotal.toLocaleString()} COP</span>
+                      </div>
+                    </div>
+                  </div>
+
                   <button 
                     onClick={() => { setIsCheckoutOpen(false); setOrderComplete(false); }}
-                    className="px-12 py-5 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest rounded-full hover:bg-emerald-600 transition-all"
+                    className="px-12 py-5 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest rounded-full hover:bg-emerald-600 transition-all shadow-xl shadow-black/10"
                   >
                     Volver a la tienda
                   </button>
@@ -750,22 +1363,26 @@ export default function App() {
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="block text-[10px] uppercase tracking-widest font-bold text-black/40 mb-2 ml-1">
-                              {docType === 'NIT' ? 'Razón Social' : 'Nombres'}
+                              {docType === 'NIT' ? 'Razón Social' : 'Nombres'} <span className="text-emerald-500">*</span>
                             </label>
                             <input 
                               type="text" 
                               required
+                              value={signupForm.firstName}
+                              onChange={(e) => handleSignupChange('firstName', e.target.value)}
                               placeholder={docType === 'NIT' ? "Ej: Moda SAS" : "Ej: Mariana"}
                               className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all outline-none text-sm"
                             />
                           </div>
                           <div>
                             <label className="block text-[10px] uppercase tracking-widest font-bold text-black/40 mb-2 ml-1">
-                              {docType === 'NIT' ? 'Rep. Legal' : 'Apellidos'}
+                              {docType === 'NIT' ? 'Rep. Legal' : 'Apellidos'} <span className="text-emerald-500">*</span>
                             </label>
                             <input 
                               type="text" 
                               required
+                              value={signupForm.lastName}
+                              onChange={(e) => handleSignupChange('lastName', e.target.value)}
                               placeholder={docType === 'NIT' ? "Ej: Pedro Pérez" : "Ej: Valencia"}
                               className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all outline-none text-sm"
                             />
@@ -774,11 +1391,13 @@ export default function App() {
                         
                         <div>
                           <label className="block text-[10px] uppercase tracking-widest font-bold text-black/40 mb-2 ml-1">
-                            Correo Electrónico
+                            Correo Electrónico <span className="text-emerald-500">*</span>
                           </label>
                           <input 
                             type="email" 
                             required
+                            value={signupForm.email}
+                            onChange={(e) => handleSignupChange('email', e.target.value)}
                             placeholder="contacto@ejemplo.co"
                             className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all outline-none text-sm"
                           />
@@ -786,16 +1405,26 @@ export default function App() {
 
                         <div className="relative">
                           <label className="block text-[10px] uppercase tracking-widest font-bold text-black/40 mb-2 ml-1">
-                            Número de Documento
+                            Número de Documento <span className="text-emerald-500">*</span>
                           </label>
-                          <input 
-                            type="text" 
-                            required
-                            value={docNumber}
-                            onChange={(e) => setDocNumber(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
-                            placeholder="ID Único"
-                            className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all outline-none text-sm"
-                          />
+                          <div className="relative">
+                            <input 
+                              type="text" 
+                              required
+                              value={docNumber}
+                              onChange={(e) => setDocNumber(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
+                              placeholder="ID Único"
+                              className={`w-full px-6 py-4 bg-[#f5f2ed] rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all outline-none text-sm border-2 ${docNumber.length > 0 && docNumber.length < 8 ? 'border-red-200 bg-red-50/30' : 'border-transparent'}`}
+                            />
+                            {docNumber.length > 0 && docNumber.length < 8 && (
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500">
+                                <AlertCircle size={18} />
+                              </div>
+                            )}
+                          </div>
+                          {docNumber.length > 0 && docNumber.length < 8 && (
+                            <p className="text-[9px] text-red-500 font-bold mt-2 ml-1">Este campo debe contener al menos 8 caracteres para ser válido</p>
+                          )}
                           <AnimatePresence>
                             {isSearching && (
                               <motion.span 
@@ -823,11 +1452,13 @@ export default function App() {
 
                         <div className={isFound ? "pt-12" : ""}>
                           <label className="block text-[10px] uppercase tracking-widest font-bold text-black/40 mb-2 ml-1">
-                            Número de Celular
+                            Número de Celular <span className="text-emerald-500">*</span>
                           </label>
                           <input 
                             type="tel" 
                             required
+                            value={signupForm.phone}
+                            onChange={(e) => handleSignupChange('phone', e.target.value)}
                             placeholder="300 123 4567"
                             className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all outline-none text-sm"
                           />
@@ -835,19 +1466,31 @@ export default function App() {
 
                         <div>
                           <label className="block text-[10px] uppercase tracking-widest font-bold text-black/40 mb-2 ml-1">
-                            Contraseña
+                            Contraseña <span className="text-emerald-500">*</span>
                           </label>
-                          <input 
-                            type="password" 
-                            required
-                            placeholder="••••••••"
-                            className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all outline-none text-sm"
-                          />
+                          <div className="relative">
+                            <input 
+                              type="password" 
+                              required
+                              value={signupForm.password}
+                              onChange={(e) => handleSignupChange('password', e.target.value)}
+                              placeholder="••••••••"
+                              className={`w-full px-6 py-4 bg-[#f5f2ed] rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all outline-none text-sm border-2 ${signupForm.password.length > 0 && signupForm.password.length < 8 ? 'border-red-200 bg-red-50/30' : 'border-transparent'}`}
+                            />
+                            {signupForm.password.length > 0 && signupForm.password.length < 8 && (
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500">
+                                <AlertCircle size={18} />
+                              </div>
+                            )}
+                          </div>
+                          {signupForm.password.length > 0 && signupForm.password.length < 8 && (
+                            <p className="text-[9px] text-red-500 font-bold mt-2 ml-1">Este campo debe contener al menos 8 caracteres para ser válido</p>
+                          )}
                         </div>
                       </div>
                       <button 
-                        disabled={isIdentifying}
-                        className="w-full py-5 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest rounded-2xl hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center gap-3 shadow-xl shadow-black/10 mt-4"
+                        disabled={isIdentifying || !isSignupValid}
+                        className="w-full py-5 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest rounded-2xl hover:bg-emerald-700 transition-all disabled:opacity-20 disabled:grayscale flex items-center justify-center gap-3 shadow-xl shadow-black/10 mt-4"
                       >
                         {isIdentifying ? (
                           <>
@@ -919,43 +1562,101 @@ export default function App() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">
-                        {docType === 'NIT' ? 'Razón Social' : 'Nombre'}
+                        {docType === 'NIT' ? 'Razón Social' : 'Nombre'} <span className="text-emerald-500">*</span>
                       </label>
-                      <input type="text" required placeholder={docType === 'NIT' ? "Moda SAS" : "Mariana"} className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all text-sm outline-none" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">
-                        {docType === 'NIT' ? 'Rep. Legal' : 'Apellido'}
-                      </label>
-                      <input type="text" required placeholder={docType === 'NIT' ? "Pedro Pérez" : "Valencia"} className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all text-sm outline-none" />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">Correo Electrónico</label>
-                    <input type="email" required placeholder="contacto@moda.co" className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all text-sm outline-none" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">Documento (ID Único)</label>
                       <input 
                         type="text" 
                         required 
-                        value={docNumber}
-                        onChange={(e) => setDocNumber(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
-                        placeholder="Número de ID" 
-                        className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all text-sm font-mono outline-none" 
+                        value={signupForm.firstName}
+                        onChange={(e) => handleSignupChange('firstName', e.target.value)}
+                        placeholder={docType === 'NIT' ? "Moda SAS" : "Mariana"} 
+                        className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all text-sm outline-none" 
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">Celular</label>
-                      <input type="tel" required placeholder="300..." className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all text-sm outline-none" />
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">
+                        {docType === 'NIT' ? 'Rep. Legal' : 'Apellido'} <span className="text-emerald-500">*</span>
+                      </label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={signupForm.lastName}
+                        onChange={(e) => handleSignupChange('lastName', e.target.value)}
+                        placeholder={docType === 'NIT' ? "Pedro Pérez" : "Valencia"} 
+                        className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all text-sm outline-none" 
+                      />
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">Contraseña</label>
-                    <input type="password" required placeholder="••••••••" className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all text-sm outline-none" />
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">Correo Electrónico <span className="text-emerald-500">*</span></label>
+                    <input 
+                      type="email" 
+                      required 
+                      value={signupForm.email}
+                      onChange={(e) => handleSignupChange('email', e.target.value)}
+                      placeholder="contacto@moda.co" 
+                      className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all text-sm outline-none" 
+                    />
                   </div>
-                  <button className="w-full py-5 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest rounded-2xl hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 mt-4 flex items-center justify-center gap-3 font-serif italic text-lg tracking-normal">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">Documento (ID Único) <span className="text-emerald-500">*</span></label>
+                      <div className="relative">
+                        <input 
+                          type="text" 
+                          required 
+                          value={docNumber}
+                          onChange={(e) => setDocNumber(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
+                          placeholder="Número de ID" 
+                          className={`w-full px-5 py-4 bg-[#f5f2ed] rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all text-sm font-mono outline-none border-2 ${docNumber.length > 0 && docNumber.length < 8 ? 'border-red-200 bg-red-50/30' : 'border-transparent'}`} 
+                        />
+                        {docNumber.length > 0 && docNumber.length < 8 && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500">
+                            <AlertCircle size={16} />
+                          </div>
+                        )}
+                      </div>
+                      {docNumber.length > 0 && docNumber.length < 8 && (
+                        <p className="text-[8px] text-red-500 font-bold ml-1 mt-1">Este campo debe contener al menos 8 caracteres para ser válido</p>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">Celular <span className="text-emerald-500">*</span></label>
+                      <input 
+                        type="tel" 
+                        required 
+                        value={signupForm.phone}
+                        onChange={(e) => handleSignupChange('phone', e.target.value)}
+                        placeholder="300..." 
+                        className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all text-sm outline-none" 
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">Contraseña <span className="text-emerald-500">*</span></label>
+                    <div className="relative">
+                      <input 
+                        type="password" 
+                        required 
+                        value={signupForm.password}
+                        onChange={(e) => handleSignupChange('password', e.target.value)}
+                        placeholder="••••••••" 
+                        className={`w-full px-5 py-4 bg-[#f5f2ed] rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all text-sm outline-none border-2 ${signupForm.password.length > 0 && signupForm.password.length < 8 ? 'border-red-200 bg-red-50/30' : 'border-transparent'}`} 
+                      />
+                      {signupForm.password.length > 0 && signupForm.password.length < 8 && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500">
+                          <AlertCircle size={16} />
+                        </div>
+                      )}
+                    </div>
+                    {signupForm.password.length > 0 && signupForm.password.length < 8 && (
+                      <p className="text-[8px] text-red-500 font-bold ml-1 mt-1">Este campo debe contener al menos 8 caracteres para ser válido</p>
+                    )}
+                  </div>
+                  <button 
+                    disabled={isIdentifying || !isSignupValid}
+                    className="w-full py-5 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest rounded-2xl hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 mt-4 flex items-center justify-center gap-3 font-serif italic text-lg tracking-normal disabled:opacity-20 disabled:grayscale"
+                  >
                     {isIdentifying ? 'Vinculando ID...' : 'Crear mi Perfil en el Ecosistema'}
                   </button>
                 </form>
@@ -1280,6 +1981,118 @@ export default function App() {
         </section>
 
       </main>
+
+      {/* Dynamic Add Address Form Modal */}
+      <AnimatePresence>
+        {isAddAddressFormOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[140] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden"
+            >
+              <div className="p-10">
+                <div className="flex justify-between items-center mb-10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
+                      <MapPin size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-serif text-2xl">Nueva Dirección</h3>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-black/40">Logística de Entrega</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setIsAddAddressFormOpen(false)} className="p-2 hover:bg-black/5 rounded-full transition-colors"><X size={20} /></button>
+                </div>
+
+                <form onSubmit={handleAddAddress} className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">Ciudad <span className="text-emerald-500">*</span></label>
+                      <select 
+                        required
+                        value={newAddress.city}
+                        onChange={(e) => setNewAddress({...newAddress, city: e.target.value})}
+                        className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-xl text-sm outline-none cursor-pointer appearance-none"
+                      >
+                        {["Bogotá", "Medellín", "Cali", "Barranquilla", "Cartagena", "Pereira", "Bucaramanga"].map(c => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">Referencia <span className="text-emerald-500">*</span></label>
+                      <input 
+                        type="text" 
+                        required 
+                        placeholder="Ej: Casa, Oficina..." 
+                        value={newAddress.name}
+                        onChange={(e) => setNewAddress({...newAddress, name: e.target.value})}
+                        className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-xl text-sm outline-none" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">Dirección Exacta <span className="text-emerald-500">*</span></label>
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="Calle 100 #15-20" 
+                      value={newAddress.address}
+                      onChange={(e) => setNewAddress({...newAddress, address: e.target.value})}
+                      className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-xl text-sm outline-none" 
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">Edificio / Apto</label>
+                      <input 
+                        type="text" 
+                        placeholder="Torre 2, Apto 502" 
+                        value={newAddress.details}
+                        onChange={(e) => setNewAddress({...newAddress, details: e.target.value})}
+                        className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-xl text-sm outline-none" 
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">Barrio / Localidad <span className="text-emerald-500">*</span></label>
+                      <input 
+                        type="text" 
+                        required 
+                        placeholder="Usaquén" 
+                        value={newAddress.neighborhood}
+                        onChange={(e) => setNewAddress({...newAddress, neighborhood: e.target.value})}
+                        className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-xl text-sm outline-none" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-5 bg-emerald-50 rounded-2xl border border-emerald-100">
+                    <p className="text-[9px] text-emerald-800 leading-relaxed italic">
+                      <span className="font-bold uppercase tracking-widest block mb-1">Nota de Cero Fricción:</span>
+                      Esta nueva dirección se vinculará automáticamente a tu Cédula/ID ({user?.id}), permitiéndote seleccionarla al instante en cualquier punto del ecosistema.
+                    </p>
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full py-5 bg-emerald-600 text-white font-bold uppercase tracking-widest rounded-2xl hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 active:scale-[0.98]"
+                  >
+                    GUARDAR Y USAR ESTA DIRECCIÓN
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Footer / Sitemap */}
       <footer className="bg-[#1a1a1a] text-white pt-24 pb-12">
