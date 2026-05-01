@@ -115,8 +115,7 @@ export default function App() {
     firstName: '',
     lastName: '',
     email: '',
-    phone: '',
-    password: ''
+    phone: ''
   });
 
   // Profile Edit State
@@ -130,8 +129,7 @@ export default function App() {
     signupForm.lastName.length > 0 &&
     signupForm.email.includes('@') &&
     docNumber.length >= 8 &&
-    signupForm.phone.length > 0 &&
-    signupForm.password.length >= 8;
+    signupForm.phone.length > 0;
 
   const handleSignupChange = (field: string, value: string) => {
     setSignupForm(prev => ({ ...prev, [field]: value }));
@@ -1368,17 +1366,6 @@ export default function App() {
                             className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all outline-none text-sm"
                           />
                         </div>
-                        <div>
-                          <label className="block text-[10px] uppercase tracking-widest font-bold text-black/40 mb-2 ml-1">
-                            Contraseña
-                          </label>
-                          <input 
-                            type="password" 
-                            required
-                            placeholder="••••••••"
-                            className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all outline-none text-sm"
-                          />
-                        </div>
                       </div>
                       <button 
                         disabled={isIdentifying}
@@ -1513,30 +1500,6 @@ export default function App() {
                             placeholder="300 123 4567"
                             className="w-full px-6 py-4 bg-[#f5f2ed] border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all outline-none text-sm"
                           />
-                        </div>
-
-                        <div>
-                          <label className="block text-[10px] uppercase tracking-widest font-bold text-black/40 mb-2 ml-1">
-                            Contraseña <span className="text-emerald-500">*</span>
-                          </label>
-                          <div className="relative">
-                            <input 
-                              type="password" 
-                              required
-                              value={signupForm.password}
-                              onChange={(e) => handleSignupChange('password', e.target.value)}
-                              placeholder="••••••••"
-                              className={`w-full px-6 py-4 bg-[#f5f2ed] rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all outline-none text-sm border-2 ${signupForm.password.length > 0 && signupForm.password.length < 8 ? 'border-red-200 bg-red-50/30' : 'border-transparent'}`}
-                            />
-                            {signupForm.password.length > 0 && signupForm.password.length < 8 && (
-                              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500">
-                                <AlertCircle size={18} />
-                              </div>
-                            )}
-                          </div>
-                          {signupForm.password.length > 0 && signupForm.password.length < 8 && (
-                            <p className="text-[9px] text-red-500 font-bold mt-2 ml-1">Este campo debe contener al menos 8 caracteres para ser válido</p>
-                          )}
                         </div>
                       </div>
                       <button 
@@ -1682,27 +1645,6 @@ export default function App() {
                         className="w-full px-5 py-4 bg-[#f5f2ed] border-none rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all text-sm outline-none" 
                       />
                     </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 ml-1">Contraseña <span className="text-emerald-500">*</span></label>
-                    <div className="relative">
-                      <input 
-                        type="password" 
-                        required 
-                        value={signupForm.password}
-                        onChange={(e) => handleSignupChange('password', e.target.value)}
-                        placeholder="••••••••" 
-                        className={`w-full px-5 py-4 bg-[#f5f2ed] rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all text-sm outline-none border-2 ${signupForm.password.length > 0 && signupForm.password.length < 8 ? 'border-red-200 bg-red-50/30' : 'border-transparent'}`} 
-                      />
-                      {signupForm.password.length > 0 && signupForm.password.length < 8 && (
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500">
-                          <AlertCircle size={16} />
-                        </div>
-                      )}
-                    </div>
-                    {signupForm.password.length > 0 && signupForm.password.length < 8 && (
-                      <p className="text-[8px] text-red-500 font-bold ml-1 mt-1">Este campo debe contener al menos 8 caracteres para ser válido</p>
-                    )}
                   </div>
                   <button 
                     disabled={isIdentifying || !isSignupValid}
@@ -1913,7 +1855,7 @@ export default function App() {
                 {[
                   { id: 1, cat: "ABRIGOS", title: "Abrigo Camel Alpaca", price: "$420.000", tag: "Ideal para Bogotá", img: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?auto=format&fit=crop&q=80&w=600" },
                   { id: 2, cat: "CAMISAS", title: "Camisa Lino Caribe", price: "$185.000", tag: "Ideal para Barranquilla", img: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&q=80&w=600" },
-                  { id: 3, cat: "PANTALONES", title: "Pantalon Chino Olivo", price: "$145.000", tag: "Clima templado", img: "https://images.unsplash.com/photo-1473966968600-fa804b86829b?auto=format&fit=crop&q=80&w=600" },
+                  { id: 3, cat: "PANTALONES", title: "Pantalón Chino Olivo - Colección Ecosistema", price: "$185.000", tag: `Diseñado para tu estilo de vida activo en ${user?.city || 'tu ciudad'}`, img: "https://images.unsplash.com/photo-1621072138294-592f20942f37?auto=format&fit=crop&q=80&w=600" },
                   { id: 4, cat: "ZAPATOS", title: "Mocasín Cuero Café", price: "$295.000", tag: "Todo clima", img: "https://images.unsplash.com/photo-1614252235316-8c8ec6971911?auto=format&fit=crop&q=80&w=600" },
                   { id: 5, cat: "CHAQUETAS", title: "Bomer Acolchada", price: "$220.000", tag: "Perfecta para Medellín", img: "https://images.unsplash.com/photo-1551028711-131da2813161?auto=format&fit=crop&q=80&w=600" },
                   { id: 6, cat: "CAMISAS", title: "Polo Premium Algodón", price: "$95.000", tag: "Fresco Barranquilla", img: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=600" },
@@ -1931,32 +1873,44 @@ export default function App() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="group"
                   >
-                    <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-[#f5f2ed] mb-4">
+                    <div className="relative aspect-[4/5] overflow-hidden rounded-[3rem] bg-[#f5f2ed] mb-4 shadow-sm group-hover:shadow-xl transition-all duration-500">
                       <img 
                         src={product.img} 
                         alt={product.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                         referrerPolicy="no-referrer"
                       />
-                      <div className="absolute top-4 left-4">
-                        <span className="px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-full text-[9px] font-bold uppercase tracking-widest text-[#1a1a1a] shadow-sm flex items-center gap-1.5">
-                          {product.tag.includes('Bogotá') ? <Wind size={10} /> : <Sun size={10} />}
-                          {product.tag}
+                      <div className="absolute top-6 left-6">
+                        <span className="px-4 py-2 bg-white/90 backdrop-blur-md rounded-full text-[9px] font-bold uppercase tracking-widest text-[#1a1a1a] shadow-sm flex items-center gap-2">
+                          <Wind size={10} className="text-emerald-600" />
+                          {product.tag.includes('Bogotá') || product.id === 3 ? 'Selección Local' : 'Favorito'}
                         </span>
                       </div>
-                      <div className="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform bg-gradient-to-t from-black/80 to-transparent">
+                      <div className="absolute inset-x-0 bottom-0 p-6 translate-y-full group-hover:translate-y-0 transition-all duration-500 bg-gradient-to-t from-black/60 to-transparent">
                         <button 
                           onClick={() => addToCart(product)}
-                          className="w-full py-3 bg-white text-black text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-lg"
+                          className="w-full py-4 bg-white text-black text-[10px] font-bold uppercase tracking-widest rounded-2xl hover:bg-emerald-600 hover:text-white transition-all shadow-2xl active:scale-95"
                         >
                           Añadir a la Bolsa
                         </button>
                       </div>
                     </div>
-                    <div className="px-2">
-                      <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-600 block mb-1">{product.cat}</span>
-                      <h4 className="font-serif text-lg leading-tight mb-1">{product.title}</h4>
-                      <p className="text-black/40 text-sm font-light italic">{product.price} COP</p>
+                    <div className="px-4">
+                      <div className="flex justify-between items-start mb-1">
+                        <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-600">{product.cat}</span>
+                        {user && product.id === 3 && (
+                          <span className="text-[8px] font-bold text-black/20 uppercase tracking-widest">Talla: {user.suggestedSize}</span>
+                        )}
+                      </div>
+                      <h4 className="font-serif text-xl leading-tight mb-2 group-hover:text-emerald-900 transition-colors">{product.title}</h4>
+                      <div className="flex flex-col gap-1">
+                        <p className="text-emerald-600 text-base font-bold">{product.price} COP</p>
+                        {product.id === 3 && (
+                          <p className="text-[9px] text-black/40 font-medium italic leading-tight">
+                            {product.tag}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 ))}
